@@ -4,6 +4,7 @@ a=sigPrimo(20000);
 b=sigPrimo(10000);
 base=sigPrimo(100000); #Base debe ser impar (primo)
 x=fix(time);
+semilla=x; # Guardamos la semilla para que el receptor pueda desencriptar el mensaje
 
 X=[];
 
@@ -24,9 +25,28 @@ for i=1:largest
 
   xNormalizada = fix(x/base*256); #Normalizamos el numero solamente a 256
 
-  X=[X;bitxor(xNormalizada,letter)] # Al valor pseudoaleatorio, le sumamos la letra en ASCII
+  X=[X;bitxor(xNormalizada,letter)]; # Al valor pseudoaleatorio, le sumamos la letra en ASCII
+end
+
+X
+figure;
+plot(X,'.');
+
+
+clc
+Y =[];
+for i=1:length(X)
+  input = X(i); # Obtenemos el primer numero
+  semilla = mod(a*semilla+b,base); # Generamos el primer nuemero aleatorio
+  xNormalizada = fix(semilla/base*256);
+
+
+  character = bitxor(input,xNormalizada);
+
+  Y =[Y;char(character)];
 end
 
 
-figure;
-plot(X,'.');
+
+
+
