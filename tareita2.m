@@ -5,27 +5,26 @@
 #Condiciones iniciales para la secuencia
 a=sigPrimo(20000);
 b=sigPrimo(10000);
-base=sigPrimo(100000); #Base debe ser impar (primo)
+base=sigPrimo(100000);  #Base debe ser impar (primo)
+password =  "sexo";     #contraseña de los dos extremos
 x=fix(time);
-semilla=x; # Guardamos la semilla para que el receptor pueda desencriptar el mensaje
+
+for i=1:length(password)
+  x =(x+uint8(password(i)));  #Pa sumar la contraseña a la llave pública
+end
+
+semilla=x; # Guardamos la semilla para que el receptor pueda desencriptar la imagen
 
 X=[];
 
-imagen = imread("gato.jpg");
-
+imagen = imread("gato.jpg");  #Leemos la imagen
 tamano = size(imagen);
-vector = imagen(:);
+vector = imagen(:);       #Convertimos la imagen a un vector por columnas
 
 
-#vector = 'Esta es una clave que debe de ser encriptada';
-largest = length(vector);
+for i=1:length(vector)
 
-
-for i=1:largest
-
-  #Extraer la ultima letra del string
-  letter = uint8(vector(i)); # Obtenemos la ultima letra del mensaje y lo pasamos a ASCII
-  # vector(end) = []; # Seteamos la ultima posicion
+  letter = vector(i); # Obtenemos letra por letra de la imagen y
 
 
   # Obtener el numero aleatorio y guargarloo en x
