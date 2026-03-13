@@ -24,8 +24,9 @@ largest = length(vector);
 for i=1:largest
 
   #Extraer la ultima letra del string
-  letter = uint8(vector(end)); # Obtenemos la ultima letra del mensaje y lo pasamos a ASCII
-  vector(end) = []; # Seteamos la ultima posicion
+  letter = uint8(vector(i)); # Obtenemos la ultima letra del mensaje y lo pasamos a ASCII
+  # vector(end) = []; # Seteamos la ultima posicion
+
 
   # Obtener el numero aleatorio y guargarloo en x
   x = mod(a*x+b,base); # El multiplicador debe de ser impar, mientras mas
