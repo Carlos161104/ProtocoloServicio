@@ -36,7 +36,7 @@ for i=1:1000
   x = mod(a*x+b,base); # El multiplicador debe de ser impar, mientras mas
                       #diferente de la base es mejor
   X=[X;fix(x/base*256)]; # Normalizamos la secuencia pero llevada solamente a 256
-  disp(fix(x/base*256));
+  disp(fix(x));
 end
 
 
