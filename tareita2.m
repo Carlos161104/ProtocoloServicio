@@ -1,27 +1,61 @@
 ## Copyright (C) 2026 canoj
-##
-## This program is free software: you can redistribute it and/or modify
-## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 3 of the License, or
-## (at your option) any later version.
-##
-## This program is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU General Public License for more details.
-##
-## You should have received a copy of the GNU General Public License
-## along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-## -*- texinfo -*-
-## @deftypefn {} {@var{retval} =} tareita2 (@var{input1}, @var{input2})
-##
-## @seealso{}
-## @end deftypefn
-
 ## Author: canoj <canoj@MSI>
 ## Created: 2026-03-13
 
-function retval = tareita2 (input1, input2)
+#Condiciones iniciales para la secuencia
+a=sigPrimo(20000);
+b=sigPrimo(10000);
+base=sigPrimo(100000); #Base debe ser impar (primo)
+x=fix(time);
+semilla=x; # Guardamos la semilla para que el receptor pueda desencriptar el mensaje
 
-endfunction
+X=[];
+
+imagen = imread("gato.jpg");
+
+tamano = size(imagen);
+vector = imagen(:);
+
+
+#vector = 'Esta es una clave que debe de ser encriptada';
+largest = length(vector);
+
+
+for i=1:largest
+
+  #Extraer la ultima letra del string
+  letter = uint8(vector(end)); # Obtenemos la ultima letra del mensaje y lo pasamos a ASCII
+  vector(end) = []; # Seteamos la ultima posicion
+
+  # Obtener el numero aleatorio y guargarloo en x
+  x = mod(a*x+b,base); # El multiplicador debe de ser impar, mientras mas
+                      #diferente de la base es mejor
+
+  xNormalizada = fix(x/base*256); #Normalizamos el numero solamente a 256
+
+  X=[X;bitxor(xNormalizada,letter)]; # Al valor pseudoaleatorio, le sumamos la letra en ASCII
+end
+
+#X;
+#figure;
+#plot(X,'.');
+
+
+clc
+Y =[];
+for i=1:length(X)
+  input = X(i); # Obtenemos el primer numero
+  semilla = mod(a*semilla+b,base); # Generamos el primer nuemero aleatorio
+  xNormalizada = fix(semilla/base*256);
+
+
+  character = bitxor(input,xNormalizada);
+
+  Y =[Y;character];
+
+
+end
+
+reimagen = reshape(Y, tamano);
+imshow(uint8(reimagen))
+
