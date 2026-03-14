@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <ctime>
 #include <vector>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 using namespace std;
 
@@ -38,7 +42,7 @@ int main()
     return 0;
 }
 
-vector<int> Encoder(int &seed)
+vector<int> Encoder(const vector<unsigned char> &pixels, int &seed)
 {
     char pass[] = "password";
     int x = (int)time(nullptr);
@@ -50,18 +54,17 @@ vector<int> Encoder(int &seed)
     }
     seed = x;
 
-    char message[] = "This is a secret message.";
-    for (int i = 0; message[i] != '\0'; ++i)
+    for (size_t i = 0; i < pixels.size(); ++i)
     {
         x = (x * A + B) % BASE;
-        int encoded_char = ((int)message[i] + x) % 256;
-        encoded.push_back(encoded_char);
+        int encoded_pixel = (pixels[i] + x) % 256;
+        encoded.push_back(encoded_pixel);
     }
 
     return encoded;
 }
 
-vector<int> Decoder(const vector<int> &encoded, int seed)
+vector<int> Decoder(const vector<int> &encoded, int seed, int width, int height, int channels)
 {
     vector<int> decoded;
     int x = seed;
@@ -69,9 +72,19 @@ vector<int> Decoder(const vector<int> &encoded, int seed)
     for (size_t i = 0; i < encoded.size(); ++i)
     {
         x = (x * A + B) % BASE;
-        int decoded_char = (encoded[i] - x + 256) % 256;
-        decoded.push_back(decoded_char);
+        int decoded_pixel = (encoded[i] - x + 256) % 256;
+        decoded.push_back(decoded_pixel);
     }
+
+    vector<unsigned char> pixels(decoded.begin(), decoded.end());
+
+    stbi_write_png(
+        "decoded_image.png",
+        width,
+        height,
+        channels,
+        pixels.data(),
+        width * channels);
 
     return decoded;
 }
