@@ -2,14 +2,14 @@
 #include <ctime>
 #include <vector>
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+#include "stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
 using namespace std;
 
-vector<int> Encoder(int &seed);
-vector<int> Decoder(const vector<int> &encoded, int seed);
+vector<int> Encoder(const vector<unsigned char> &pixels, int seed, int width, int height, int channels);
+vector<int> Decoder(const vector<int> &encoded, int seed, int width, int height, int channels);
 int nextPrime(int x);
 bool isPrime(int x);
 
@@ -20,29 +20,24 @@ bool isPrime(int x);
 int main()
 {
     int seed;
+    int width, height, channels;
+    unsigned char *data = stbi_load("./gato.jpg", &width, &height, &channels, 0);
+    vector<unsigned char> pixels(data, data + width * height * channels);
+    stbi_image_free(data);
+
     vector<int> X;
     vector<int> Y;
 
-    X = Encoder(seed);
-    printf("The encoded message is:\n");
-    for (size_t i = 0; i < X.size(); ++i)
-    {
-        printf("%d ", X[i]);
-    }
-    printf("\n");
+    X = Encoder(pixels, seed, width, height, channels);
+    printf("Se encripto la imagen con la semilla: %d\n", seed);
 
-    Y = Decoder(X, seed);
-    printf("The decoded message is:\n");
-    for (size_t i = 0; i < Y.size(); ++i)
-    {
-        printf("%c", (char)Y[i]);
-    }
-    printf("\n");
+    Y = Decoder(X, seed, width, height, channels);
+    printf("Se desencripto la imagen con la semilla: %d\n", seed);
 
     return 0;
 }
 
-vector<int> Encoder(const vector<unsigned char> &pixels, int &seed)
+vector<int> Encoder(const vector<unsigned char> &pixels, int seed, int width, int height, int channels)
 {
     char pass[] = "password";
     int x = (int)time(nullptr);
@@ -60,6 +55,14 @@ vector<int> Encoder(const vector<unsigned char> &pixels, int &seed)
         int encoded_pixel = (pixels[i] + x) % 256;
         encoded.push_back(encoded_pixel);
     }
+
+    stbi_write_png(
+        "coded_image.png",
+        width,
+        height,
+        channels,
+        pixels.data(),
+        width * channels);
 
     return encoded;
 }
@@ -101,7 +104,6 @@ bool isPrime(int x)
     return true;
 }
 
-// Function to find the next prime after x
 int nextPrime(int x)
 {
     x = x + 1;
@@ -111,3 +113,11 @@ int nextPrime(int x)
     }
     return x;
 }
+
+// optimizar el algoritmito
+// agregar niveles de codificacion (generar los parametros inicailes de manera aleatoria)
+// implementar miltihilos para encriptar
+
+// 1. Si es de orden 4 por ejemplo, generar condiciones iniciales de los sigueintes 3 ordenes (las siguientes 3 semillas)
+// 2. Se gaurda los 3 primos usados y el factor inicial (las siguinetes semillas y siguientes primos se generan
+// a partir de la semilla inicial y los primos iniciales)
