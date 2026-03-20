@@ -114,11 +114,3 @@ int nextPrime(int x)
     }
     return x;
 }
-
-// optimizar el algoritmito
-// agregar niveles de codificacion (generar los parametros inicailes de manera aleatoria)
-// implementar miltihilos para encriptar
-
-// 1. Si es de orden 4 por ejemplo, generar condiciones iniciales de los sigueintes 3 ordenes (las siguientes 3 semillas)
-// 2. Se gaurda los 3 primos usados y el factor inicial (las siguinetes semillas y siguientes primos se generan
-// a partir de la semilla inicial y los primos iniciales)
