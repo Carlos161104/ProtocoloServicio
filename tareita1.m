@@ -47,11 +47,6 @@ for i=1:length(X)
 end
 
 
-imagen = imread("gato.jpg");
 
-tamano = size(imagen);
-vector = imagen(:);
-reimagen = reshape(vector, tamano);
-imshow(uint8(reimagen))
 
 

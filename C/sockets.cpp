@@ -1,3 +1,5 @@
+//compile with:
+// g++ .\sockets.cpp -o sockets.exe -lws2_32
 #include <stdio.h>
 #include <ctime>
 #include <vector>
