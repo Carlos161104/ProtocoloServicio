@@ -8,13 +8,9 @@
 
 using namespace std;
 
-vector<int> Encoder(const vector<int> &data, vector<int> initial_params, int orden);
+void Encoder(vector<int> &data, vector<int> params, int orden);
 int nextPrime(int x);
 bool isPrime(int x);
-
-#define A nextPrime(20000)
-#define B nextPrime(10000)
-#define BASE nextPrime(100000)
 
 int main()
 {
@@ -43,16 +39,20 @@ int main()
     }
     seed = x;
 
-    vector<int> initial_params = {A, B, BASE, x}; // {a, b , base , x (semilla inicial)}
+    int A = nextPrime(20000);
+    int B = nextPrime(10000);
+    int BASE = nextPrime(100000);
+    vector<int> initial_params = {x, A, B, BASE}; // {x (semilla inicial), a, b , base}
     int orden = 4; // Cantidad de veces que se encripta la imagen
 
     // Mandamos llamar a la funcion recursiva
-    X = Encoder(data, initial_params, orden);
+    Encoder(data, initial_params, orden);
+    X = data;
     printf("Se encripto la imagen con la semilla: %d\n", seed);
 
     vector<unsigned char> encoded(X.begin(), X.end());
     stbi_write_png(
-        "encoded_image.png",
+        "encoded_image2.png",
         width,
         height,
         channels,
@@ -60,10 +60,11 @@ int main()
         width * channels
     );
 
-    Y = Encoder(X, initial_params, orden);
+    Encoder(X, initial_params, orden);
+    Y = X;
     vector<unsigned char> result(Y.begin(), Y.end());
     stbi_write_png(
-        "decoded_image.png",
+        "decoded_image2.png",
         width,
         height,
         channels,
@@ -76,32 +77,32 @@ int main()
     return 0;
 }
 
-vector<int> Encoder(const vector<int> &data, vector<int> initial_params, int orden)
+void Encoder(vector<int> &data, vector<int> params, int orden)
 {
-    vector<int> encoded;
-    int Xseg = initial_params[0];
-    int Aseg = initial_params[1];
-    int Bseg = initial_params[2];
-    int BASEseg = initial_params[3];
-    initial_params.clear();
-    
-    for (size_t i = 0; i < data.size(); ++i)
+    //recore el orden
+    for (int i = 0; i < orden; ++i)
     {
-        Xseg = (Xseg * Aseg + Bseg) % BASEseg;
-        if (i < 4)
-        {
-            initial_params.push_back(Xseg);
-        }
-        int encoded_data = data[i] ^ (Xseg % 256); // Aplicamos el bitxor
-        encoded.push_back(encoded_data);
-    }
+        int x = params[0];
+        int A = params[1];
+        int B = params[2];
+        int BASE = params[3];
+        params.clear();
 
-    if (orden > 1)
-    {
-        encoded = Encoder(encoded, initial_params, orden - 1);
+        //recorre el anillo congruencial
+        for (size_t j = 0; j < data.size(); ++j)
+        {
+            x = (x * A + B) % BASE;
+
+            //Capturamos los primeros 4 para la SIGUIENTE capa (orden)
+            if (j < 4)
+            {
+                params.push_back(x);
+            }
+
+            data[j] = data[j] ^ (x % 256); // Aplicamos el bitxor
+            
+        }
     }
-    
-    return encoded;
 }
 
 bool isPrime(int x) {
