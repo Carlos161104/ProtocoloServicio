@@ -8,63 +8,52 @@
 
 using namespace std;
 
-void Encoder(vector<int> &data, vector<int> params, int orden);
+void Encoder(vector<unsigned char> &data, vector<int> params, size_t orden);
 int nextPrime(int x);
 bool isPrime(int x);
 
 int main()
 {
-    int seed;
     int width, height, channels;
-
     // Leemos la imagen y la guardamos en un vector de unsigned char
     unsigned char *image = stbi_load("./gato.jpg", &width, &height, &channels, 0);
 
     // Convertimos el puntero a un vector de unsigned char para facilitar su manejo
-    vector<int> data(image, image + width * height * channels);
+    vector<unsigned char> data(image, image + width * height * channels);
 
     // Liberamos la memoria asignada por stbi_load
     stbi_image_free(image);
 
-    vector<int> X; // Sera nuestro vector ya codificado
-    vector<int> Y; // Sera nuestro vector ya decodificado
-
-    char pass[] = "password";   // Este es nuestro password (clave privada)
-    int x = (int)time(nullptr); // Semilla a la caul sumar password
+    const char pass[] = "password";   // Este es nuestro password (clave privada)
+    int x = (int)time(nullptr); // Semilla a la cual sumar password
 
     // Bucle para sumar la contrasena al valor de la semilla
-    for (int i = 0; pass[i] != '\0'; ++i)
+    for (size_t i = 0; pass[i] != '\0'; ++i)
     {
         x += (int)pass[i];
     }
-    seed = x;
 
-    int A = nextPrime(20000);
-    int B = nextPrime(10000);
-    int BASE = nextPrime(100000);
-    vector<int> initial_params = {x, A, B, BASE}; // {x (semilla inicial), a, b , base}
-    int orden = 4; // Cantidad de veces que se encripta la imagen
+    const int seed = x;
+    const vector<int> initial_params = {x, nextPrime(20000), nextPrime(10000), nextPrime(100000)}; // {x (semilla inicial), a, b , base}
+    const int orden = 5; // Cantidad de veces que se encripta la imagen
 
     // Mandamos llamar a la funcion recursiva
     Encoder(data, initial_params, orden);
-    X = data;
     printf("Se encripto la imagen con la semilla: %d\n", seed);
 
-    vector<unsigned char> encoded(X.begin(), X.end());
     stbi_write_png(
-        "encoded_image2.png",
+        "encoded_image.png",
         width,
         height,
         channels,
-        encoded.data(),
+        data.data(),
         width * channels
     );
 
-    Encoder(X, initial_params, orden);
-    Y = X;
-    vector<unsigned char> result(Y.begin(), Y.end());
+    Encoder(data, initial_params, orden);
+    vector<unsigned char> result(data.begin(), data.end());
     stbi_write_png(
-        "decoded_image2.png",
+        "decoded_image.png",
         width,
         height,
         channels,
@@ -77,16 +66,12 @@ int main()
     return 0;
 }
 
-void Encoder(vector<int> &data, vector<int> params, int orden)
+void Encoder(vector<unsigned char> &data, vector<int> params, size_t orden)
 {
     //recore el orden
-    for (int i = 0; i < orden; ++i)
+    for (size_t i = 0; i < orden; ++i)
     {
-        int x = params[0];
-        int A = params[1];
-        int B = params[2];
-        int BASE = params[3];
-        params.clear();
+        int x = params[0], A = params[1], B = params[2], BASE = params[3];
 
         //recorre el anillo congruencial
         for (size_t j = 0; j < data.size(); ++j)
@@ -94,12 +79,9 @@ void Encoder(vector<int> &data, vector<int> params, int orden)
             x = (x * A + B) % BASE;
 
             //Capturamos los primeros 4 para la SIGUIENTE capa (orden)
-            if (j < 4)
-            {
-                params.push_back(x);
-            }
-
-            data[j] = data[j] ^ (x % 256); // Aplicamos el bitxor
+            if (j < 4) params[j] = x;
+            // Aplicamos el bitxor
+            data[j] ^= (x % 256);
             
         }
     }
@@ -116,6 +98,7 @@ bool isPrime(int x) {
     }
     return true;
 }
+
 int nextPrime(int x)
 {
     x = x + 1; //-----------sobra?
