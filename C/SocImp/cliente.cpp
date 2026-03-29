@@ -64,16 +64,17 @@ int main()
 
         int dataStatus = 1;
         int count;
-        while (dataStatus == 1){
+        while (true){
             count++;
             dataStatus = recv(cliente, (char *)receivedData.data(), tamanio, 0);
-            finalReceivedData.push_back((unsigned char)*receivedData.data());
+            finalReceivedData.insert(finalReceivedData.end(), receivedData.begin(), receivedData.begin() + dataStatus);
             printf("Recibiendo datos... %d\n", count);
+            if (dataStatus <= 0) break; 
         }
         // Recibimos los bytes directamente en la memoria del vector
         
 
-        if (dataStatus > 0)
+        if (dataStatus >= 0)
         {
             printf("Datos recibidos correctamente.");
         } else {

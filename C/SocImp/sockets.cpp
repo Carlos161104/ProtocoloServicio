@@ -72,13 +72,19 @@ int main()
             send(client, (const char *)&publicKey, sizeof(publicKey), 0);
 
             // Calculamos el tamaño de imageData
-            const int datosSize = 1024;
+            const int datosSize = imageData.size();
 
             // enviar tamaño de info
             //send(client, (const char *)&datosSize, sizeof(datosSize), 0);
 
             // enviar info
-            send(client, (const char *)imageData.data(), datosSize, 0);
+            int count = 0;
+            while (count < datosSize)
+            {
+                int bytesToSend = min(1024, datosSize - count);
+                send(client, (const char *)imageData.data() + count, bytesToSend, 0);
+                count += bytesToSend;
+            }
 
             closesocket(client);
         }
