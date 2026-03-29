@@ -6,6 +6,7 @@
 #include "stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
+#include <string>
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -32,6 +33,8 @@ int main()
 
     // INTENTAR Conectar al servidor
     printf("Intentando conectar al servidor...\n");
+
+    cliente = socket(AF_INET, SOCK_STREAM, 0);
     while (true)
     {
         cliente = socket(AF_INET, SOCK_STREAM, 0);
@@ -51,44 +54,45 @@ int main()
     int publciKey = 0;
     int tamanio = 1024;
     int publicKeySatus = recv(cliente, (char *)&publciKey, sizeof(publciKey), 0);
-    if (publicKeySatus >= 0) {
-    
+    if (publicKeySatus >= 0)
+    {
 
         printf("Llave pública recibida: %d\n", publciKey);
         // Preparar el vector y recibir los datos
         // Redimensionamos el vector para que tenga espacio suficiente
         vector<unsigned char> receivedData(tamanio);
 
-        //en
+        // en
         vector<unsigned char> finalReceivedData;
 
         int dataStatus = 1;
-        int count;
-        while (true){
-            count++;
+        while (true)
+        {
             dataStatus = recv(cliente, (char *)receivedData.data(), tamanio, 0);
             finalReceivedData.insert(finalReceivedData.end(), receivedData.begin(), receivedData.begin() + dataStatus);
-            printf("Recibiendo datos... %d\n", count);
-            if (dataStatus <= 0) break; 
+
+            if (dataStatus <= 0)
+                break;
         }
         // Recibimos los bytes directamente en la memoria del vector
-        
 
         if (dataStatus >= 0)
         {
             printf("Datos recibidos correctamente.");
-        } else {
+        }
+        else
+        {
             printf("Error al recibir los datos\n %d", GetLastError());
         }
 
         // Parametros de desifrado
         const char pass[] = "password";
         // Bucle para sumar la contrasena al valor de la semilla
-        for (size_t i = 0; pass[i] != '\0'; ++i)
-        {
-            publciKey += (int)pass[i];
-        }
-        const vector<int> initial_params = {publciKey, nextPrime(20000), nextPrime(10000), nextPrime(100000)}; // {x (semilla inicial), a, b , base}
+        for (char c : string(pass))
+            publciKey += c;
+
+        int seed = publciKey;                                                                             // La semilla es la clave publica mas la contrasena
+        const vector<int> initial_params = {seed, nextPrime(20000), nextPrime(10000), nextPrime(100000)}; // {x (semilla inicial), a, b , base}
         const int orden = 5;
 
         stbi_write_png(
@@ -97,22 +101,20 @@ int main()
             277,
             3,
             finalReceivedData.data(),
-            236 * 3
-        );
+            236 * 3);
 
         // Llamar a la funcion de desenctriptacion
         Decoding(finalReceivedData, initial_params, orden);
-        vector<unsigned char> result(finalReceivedData.begin(), finalReceivedData.end());
         stbi_write_png(
             "decoded_image.png",
             236,
             277,
             3,
-            result.data(),
-            236 * 3
-        );
-
-    } else {
+            finalReceivedData.data(),
+            236 * 3);
+    }
+    else
+    {
         printf("Error al recibir la llave publica\n %d", GetLastError());
     }
 
@@ -128,13 +130,14 @@ int main()
 
 void Decoding(vector<unsigned char> &data, vector<int> params, size_t orden)
 {
+    const size_t n = data.size();
     // recore el orden
     for (size_t i = 0; i < orden; ++i)
     {
         int x = params[0], A = params[1], B = params[2], BASE = params[3];
 
         // recorre el anillo congruencial
-        for (size_t j = 0; j < data.size(); ++j)
+        for (size_t j = 0; j < n; ++j)
         {
             x = (x * A + B) % BASE;
 

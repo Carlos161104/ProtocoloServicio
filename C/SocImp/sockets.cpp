@@ -32,10 +32,9 @@ int main()
     const int publicKey = x;        // La clave publica es la semilla sin sumar el password
 
     // Bucle para sumar la contrasena al valor de la semilla
-    for (size_t i = 0; pass[i] != '\0'; ++i)
-    {
-        x += (int)pass[i];
-    }
+    for (char c : string(pass))
+        x += c;
+
     vector<int> initial_params = {x, nextPrime(20000), nextPrime(10000), nextPrime(100000)}; // {x (semilla inicial), a, b , base}
     const int orden = 5;
 
@@ -73,9 +72,6 @@ int main()
 
             // Calculamos el tamaño de imageData
             const int datosSize = imageData.size();
-
-            // enviar tamaño de info
-            // send(client, (const char *)&datosSize, sizeof(datosSize), 0);
 
             // enviar info
             int count = 0;
