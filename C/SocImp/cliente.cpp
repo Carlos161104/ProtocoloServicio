@@ -2,14 +2,18 @@
 #include <vector>
 #include <winsock2.h>
 #include <windows.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 #pragma comment(lib, "ws2_32.lib")
+
+using namespace std;
 
 void Decoding(vector<unsigned char> &data, vector<int> params, size_t orden);
 int nextPrime(int x);
 bool isPrime(int x);
-
-using namespace std;
 
 int main()
 {
@@ -45,26 +49,35 @@ int main()
     printf("¡Conectado exitosamente!\n");
 
     int publciKey = 0;
-    int bytesRes = recv(cliente, (char *)&publciKey, sizeof(publciKey), 0);
+    int tamanio = 1024;
+    int publicKeySatus = recv(cliente, (char *)&publciKey, sizeof(publciKey), 0);
+    if (publicKeySatus >= 0) {
+    
 
-    // Recibir el número de elementos (el tamaño)
-    int tamanio = 0;
-    int bytesReceived = recv(cliente, (char *)&tamanio, sizeof(tamanio), 0);
-
-    if (bytesReceived > 0)
-    {
-        printf("El servidor enviara %d datos.\n", tamanio);
-
+        printf("Llave pública recibida: %d\n", publciKey);
         // Preparar el vector y recibir los datos
         // Redimensionamos el vector para que tenga espacio suficiente
         vector<unsigned char> receivedData(tamanio);
 
-        // Recibimos los bytes directamente en la memoria del vector
-        int dataBytes = recv(cliente, (char *)receivedData.data(), tamanio * sizeof(int), 0);
+        //en
+        vector<unsigned char> finalReceivedData;
 
-        if (dataBytes > 0)
+        int dataStatus = 1;
+        int count;
+        while (dataStatus == 1){
+            count++;
+            dataStatus = recv(cliente, (char *)receivedData.data(), tamanio, 0);
+            finalReceivedData.push_back((unsigned char)*receivedData.data());
+            printf("Recibiendo datos... %d\n", count);
+        }
+        // Recibimos los bytes directamente en la memoria del vector
+        
+
+        if (dataStatus > 0)
         {
             printf("Datos recibidos correctamente.");
+        } else {
+            printf("Error al recibir los datos\n %d", GetLastError());
         }
 
         // Parametros de desifrado
@@ -77,8 +90,29 @@ int main()
         const vector<int> initial_params = {publciKey, nextPrime(20000), nextPrime(10000), nextPrime(100000)}; // {x (semilla inicial), a, b , base}
         const int orden = 5;
 
+        stbi_write_png(
+            "encoded_image.png",
+            236,
+            277,
+            3,
+            finalReceivedData.data(),
+            236 * 3
+        );
+
         // Llamar a la funcion de desenctriptacion
-        Decoding(receivedData, initial_params, orden);
+        Decoding(finalReceivedData, initial_params, orden);
+        vector<unsigned char> result(finalReceivedData.begin(), finalReceivedData.end());
+        stbi_write_png(
+            "decoded_image.png",
+            236,
+            277,
+            3,
+            result.data(),
+            236 * 3
+        );
+
+    } else {
+        printf("Error al recibir la llave publica\n %d", GetLastError());
     }
 
     // 5. Limpieza

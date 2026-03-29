@@ -13,23 +13,23 @@
 #include <winsock2.h>
 #pragma comment(lib, "ws2_32.lib")
 
-void ReadImage(vector<unsigned char> &data, int &width, int &height, int &channels, const string path);
+using namespace std;
+
+vector<unsigned char> ReadImage( int &width, int &height, int &channels, const string path);
 void Encoder(vector<unsigned char> &data, vector<int> params, size_t orden);
 int nextPrime(int x);
 bool isPrime(int x);
-
-using namespace std;
 
 int main()
 {
     // Leemos la imagen y la almacenamos en el vector
     int width, height, channels;
-    vector<unsigned char> imageData;
-    ReadImage(imageData, width, height, channels, "./encoded_image.png");
+    vector<unsigned char> imageData = ReadImage(width, height, channels, "./gato.jpg");
 
     // Declaramos los paarametros para la encriptacion
     const char pass[] = "password";        // Este es nuestro password (clave privada)
-    int x, puclicKey = (int)time(nullptr); // Semilla a la cual sumar password
+    int x = (int)time(nullptr); // Semilla a la cual sumar password
+    const int publicKey = x; // La clave publica es la semilla sin sumar el password
 
     // Bucle para sumar la contrasena al valor de la semilla
     for (size_t i = 0; pass[i] != '\0'; ++i)
@@ -69,16 +69,16 @@ int main()
         {
             printf("Conexion recibida!\n");
 
-            send(client, (const char *)&puclicKey, sizeof(puclicKey), 0);
+            send(client, (const char *)&publicKey, sizeof(publicKey), 0);
 
             // Calculamos el tamaño de imageData
-            int datosSize = imageData.size();
+            const int datosSize = 1024;
 
             // enviar tamaño de info
-            send(client, (const char *)&datosSize, sizeof(datosSize), 0);
+            //send(client, (const char *)&datosSize, sizeof(datosSize), 0);
 
             // enviar info
-            send(client, (const char *)imageData.data(), datosSize * sizeof(int), 0);
+            send(client, (const char *)imageData.data(), datosSize, 0);
 
             closesocket(client);
         }
@@ -89,12 +89,12 @@ int main()
     return 0;
 }
 
-void ReadImage(vector<unsigned char> &data, int &width, int &height, int &channels, const string path)
+vector<unsigned char> ReadImage( int &width, int &height, int &channels, const string path)
 {
-
     unsigned char *image = stbi_load(path.c_str(), &width, &height, &channels, 0);
-    data.assign(image, image + width * height * channels);
+    vector<unsigned char> data(image, image + width * height * channels);
     stbi_image_free(image);
+    return data;
 }
 
 void Encoder(vector<unsigned char> &data, vector<int> params, size_t orden)
