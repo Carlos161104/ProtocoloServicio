@@ -15,8 +15,8 @@
 
 using namespace std;
 
-vector<unsigned char> ReadImage( int &width, int &height, int &channels, const string path);
-void Encoder(vector<unsigned char> &data, vector<int> params, size_t orden);
+vector<unsigned char> ReadImage(int &width, int &height, int &channels, const string &path);
+void Encoder(vector<unsigned char> &data, vector<int> &params, size_t orden);
 int nextPrime(int x);
 bool isPrime(int x);
 
@@ -27,16 +27,16 @@ int main()
     vector<unsigned char> imageData = ReadImage(width, height, channels, "./gato.jpg");
 
     // Declaramos los paarametros para la encriptacion
-    const char pass[] = "password";        // Este es nuestro password (clave privada)
-    int x = (int)time(nullptr); // Semilla a la cual sumar password
-    const int publicKey = x; // La clave publica es la semilla sin sumar el password
+    const char pass[] = "password"; // Este es nuestro password (clave privada)
+    int x = (int)time(nullptr);     // Semilla a la cual sumar password
+    const int publicKey = x;        // La clave publica es la semilla sin sumar el password
 
     // Bucle para sumar la contrasena al valor de la semilla
     for (size_t i = 0; pass[i] != '\0'; ++i)
     {
         x += (int)pass[i];
     }
-    const vector<int> initial_params = {x, nextPrime(20000), nextPrime(10000), nextPrime(100000)}; // {x (semilla inicial), a, b , base}
+    vector<int> initial_params = {x, nextPrime(20000), nextPrime(10000), nextPrime(100000)}; // {x (semilla inicial), a, b , base}
     const int orden = 5;
 
     Encoder(imageData, initial_params, orden);
@@ -75,14 +75,18 @@ int main()
             const int datosSize = imageData.size();
 
             // enviar tamaño de info
-            //send(client, (const char *)&datosSize, sizeof(datosSize), 0);
+            // send(client, (const char *)&datosSize, sizeof(datosSize), 0);
 
             // enviar info
             int count = 0;
             while (count < datosSize)
             {
                 int bytesToSend = min(1024, datosSize - count);
-                send(client, (const char *)imageData.data() + count, bytesToSend, 0);
+                short sent = send(client, (const char *)imageData.data() + count, bytesToSend, 0);
+
+                if (sent <= 0)
+                    break;
+
                 count += bytesToSend;
             }
 
@@ -95,7 +99,7 @@ int main()
     return 0;
 }
 
-vector<unsigned char> ReadImage( int &width, int &height, int &channels, const string path)
+vector<unsigned char> ReadImage(int &width, int &height, int &channels, const string &path)
 {
     unsigned char *image = stbi_load(path.c_str(), &width, &height, &channels, 0);
     vector<unsigned char> data(image, image + width * height * channels);
@@ -103,15 +107,16 @@ vector<unsigned char> ReadImage( int &width, int &height, int &channels, const s
     return data;
 }
 
-void Encoder(vector<unsigned char> &data, vector<int> params, size_t orden)
+void Encoder(vector<unsigned char> &data, vector<int> &params, size_t orden)
 {
+    const size_t n = data.size();
     // recore el orden
     for (size_t i = 0; i < orden; ++i)
     {
         int x = params[0], A = params[1], B = params[2], BASE = params[3];
 
         // recorre el anillo congruencial
-        for (size_t j = 0; j < data.size(); ++j)
+        for (size_t j = 0; j < n; ++j)
         {
             x = (x * A + B) % BASE;
 
@@ -119,7 +124,7 @@ void Encoder(vector<unsigned char> &data, vector<int> params, size_t orden)
             if (j < 4)
                 params[j] = x;
             // Aplicamos el bitxor
-            data[j] ^= (x % 256);
+            data[j] ^= static_cast<unsigned char>(x); // Es lo mismo que x % 256, pero mas directo y eficiente
         }
     }
 }
